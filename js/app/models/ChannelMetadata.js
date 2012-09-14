@@ -50,6 +50,25 @@ define(function(require) {
 
     accessModel: function() {
       return this.get('access_model');
+    },
+
+    saveAvatar: function(file, credentials, callbacks) {
+      var xhr = new XMLHttpRequest;
+      var auth = credentials.toAuthorizationHeader();
+      var data = this._constructAvatarData(file, credentials);
+      xhr.open('PUT', this.avatarUrl(), true);
+      xhr.setRequestHeader('Authorization', auth);
+      xhr.withCredentials = true;
+      xhr.onload = callbacks.success;
+      xhr.onerror = callbacks.error;
+      xhr.send(data);
+    },
+
+    _constructAvatarData: function(file, credentials) {
+      var data = new FormData;
+      data.append('content-type', file.type);
+      data.append('data', file);
+      return data;
     }
   });
 

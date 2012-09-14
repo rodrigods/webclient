@@ -30,6 +30,20 @@ define(function(require) {
       return api.url(this.channel, 'subscribers', 'posts');
     },
 
+    owner: function() {
+      var self = this;
+      var owner = _.find(this.usernames(), function(username) {
+        return self.attributes[username] == 'owner';
+      });
+      // The owner of a channel sometimes doesn't appear in the
+      // list of followers in current buddycloud-server versions.
+      // Return the channel's name in such cases, which is the
+      // right thing to do for personal channels. (It will do
+      // no harm for topic channels, as the names of those never
+      // equal a normal username.)
+      return owner || this.channel;
+    },
+
     usernames: function() {
       return _.keys(this.attributes);
     },

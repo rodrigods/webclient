@@ -17,6 +17,7 @@
 define(function(require) {
   var $ = require('jquery');
   var _ = require('underscore');
+  var AvatarDialog = require('app/views/AvatarDialog');
   var avatarFallback = require('app/util/avatarFallback');
   var Backbone = require('backbone');
   var template = require('text!templates/MetadataPane.html');
@@ -28,12 +29,14 @@ define(function(require) {
     className: 'metadata-pane',
     events: {
       'click .follow': '_follow',
-      'click .unfollow': '_unfollow'},
+      'click .unfollow': '_unfollow',
+      'click .change-avatar': '_showAvatarDialog'
+    },
 
     initialize: function(options) {
       this.model.bind('fetch', this.render, this);
-      Events.bind('subscribedChannel', this._renderButton, this);
-      Events.bind('unsubscribedChannel', this._renderButton, this);
+      Events.bind('subscribedChannel', this._renderFollowButton, this);
+      Events.bind('unsubscribedChannel', this._renderFollowButton, this);
     },
 
     render: function() {
@@ -42,21 +45,28 @@ define(function(require) {
         linkUrlsFunc: parseUtil.linkUrls,
         safeString: parseUtil.safeString
       }));
-      if (this._isLoggedIn()) {
-        this._renderButton();
-      }
+      this._renderButtons();
       avatarFallback(this.$('img'), this.model.metadata.channelType(), 64);
+    },
+
+    _renderButtons: function() {
+      if (this._isLoggedIn()) {
+        this._renderFollowButton();
+        if (this._userIsOwner()) {
+          this._renderAvatarButton();
+        }
+      }
     },
 
     _isLoggedIn: function() {
       return !!this.options.credentials.username;
     },
 
-    _renderButton: function() {
+    _renderFollowButton: function() {
       var button = this._userIsFollowing() ?
         $('<button class="unfollow">Unfollow</button>') :
         $('<button class="follow">Follow</button>');
-      this.$('button').remove();
+      this.$('.follow, .unfollow').remove();
       this.$el.append(button);
     },
 
@@ -66,16 +76,45 @@ define(function(require) {
       return _.include(subscribedChannels, this.model.name);
     },
 
+    _userIsOwner: function() {
+      var username = this.options.credentials.username;
+      return this.model.followers.owner() == username;
+    },
+
+    _renderAvatarButton: function() {
+      var button = $('<button class="change-avatar">Change Avatar…</button>');
+      this.$('.change-avatar').remove();
+      this.$el.append(button);
+    },
+
     _follow: function() {
-      this.options.subscribed.subscribe(this.model.name, 'posts', this._defaultChannelRole(), this.options.credentials);
+      this.options.subscribed.subscribe(
+        this.model.name, 'posts',
+        this._defaultChannelRole(),
+        this.options.credentials
+      );
     },
 
     _unfollow: function() {
-      this.options.subscribed.unsubscribe(this.model.name, 'posts', this.options.credentials);
+      this.options.subscribed.unsubscribe(
+        this.model.name, 'posts',
+        this.options.credentials
+      );
     },
 
     _defaultChannelRole: function() {
-      return this.model.metadata.accessModel() === 'authorize' ? 'member' : 'publisher';
+      return this.model.metadata.accessModel() === 'authorize' ?
+        'member' :
+        'publisher';
+    },
+
+    _showAvatarDialog: function() {
+      var dialog = new AvatarDialog({
+        model: this.model.metadata,
+        credentials: this.options.credentials
+      });
+      dialog.render();
+      $('body').prepend(dialog.el);
     }
   });
 
