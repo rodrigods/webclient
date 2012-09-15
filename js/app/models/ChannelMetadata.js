@@ -53,15 +53,19 @@ define(function(require) {
     },
 
     saveAvatar: function(file, credentials, callbacks) {
-      var xhr = new XMLHttpRequest;
       var auth = credentials.toAuthorizationHeader();
       var data = this._constructAvatarData(file, credentials);
-      xhr.open('PUT', this.avatarUrl(), true);
-      xhr.setRequestHeader('Authorization', auth);
-      xhr.withCredentials = true;
-      xhr.onload = callbacks.success;
-      xhr.onerror = callbacks.error;
-      xhr.send(data);
+      $.ajax({
+        type: 'PUT',
+        url: this.avatarUrl(),
+        headers: {'Authorization': auth},
+        xhrFields: {withCredentials: true},
+        data: data,
+        processData: false,
+        contentType: false,
+        success: callbacks.success,
+        error: callbacks.error
+      });
     },
 
     _constructAvatarData: function(file, credentials) {

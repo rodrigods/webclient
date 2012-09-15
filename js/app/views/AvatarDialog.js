@@ -31,9 +31,10 @@ define(function(require) {
       event.preventDefault();
       var file = this.$('.avatar-file').get(0).files[0];
       var credentials = this.options.credentials;
+      var self = this;
       this.model.saveAvatar(file, credentials, {
         success: function() {
-          this.$el.clear();
+          self.$el.remove();
         },
         error: function(event) {
           console.log(event);
